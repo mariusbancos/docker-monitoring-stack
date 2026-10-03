@@ -1,0 +1,32 @@
+groups:
+  - name: monitoring-stack
+    rules:
+      - alert: TargetDown
+        expr: up{job!="node"} == 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.job }} target {{ $labels.instance }} is down"
+          description: "Prometheus could not scrape {{ $labels.instance }} for 5 minutes."
+
+      - alert: PrometheusConfigReloadFailed
+        expr: prometheus_config_last_reload_successful == 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Prometheus configuration reload failed"
+          description: "Check the Prometheus logs; the previous configuration is still active."
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[10m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: "Prometheus failed to evaluate alert rules"
+          description: "{{ $value }} rule evaluations failed in the last 10 minutes."
+
+      - alert: AlertmanagerNotificationsFailing
+        expr: increase(alertmanager_notifications_failed_total[10m]) > 0
+        labels: { severity: critical }
+        annotations:
+          summary: "Alertmanager cannot deliver {{ $labels.integration }} notifications"
+          description: "Alerts are firing but not reaching you. Check the receiver configuration."

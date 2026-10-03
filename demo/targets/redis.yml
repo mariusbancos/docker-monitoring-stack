@@ -1,0 +1,2 @@
+- targets: [redis-exporter:9121]
+  labels: { host: demo-redis }

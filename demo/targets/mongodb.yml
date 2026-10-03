@@ -1,0 +1,2 @@
+- targets: [mongodb-exporter:9216]
+  labels: { host: demo-mongodb }

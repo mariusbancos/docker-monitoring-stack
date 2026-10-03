@@ -1,0 +1,6 @@
+# Enable with: docker compose --profile mongodb up -d
+# then uncomment the target below.
+[]
+# - targets: [mongodb-exporter:9216]
+#   labels:
+#     host: mongodb-primary

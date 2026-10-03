@@ -1,0 +1,95 @@
+groups:
+  - name: mongodb
+    rules:
+      - alert: MongoDBDown
+        expr: mongodb_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.host }}: MongoDB is not responding"
+          description: "The exporter cannot connect to MongoDB."
+
+      - alert: MongoDBReplicationLag
+        expr: |
+          (
+            max by (host, instance, rs_nm) (mongodb_members_optimeDate{member_state="PRIMARY"})
+            - on (host, instance, rs_nm) group_right
+            mongodb_members_optimeDate{member_state="SECONDARY"}
+          ) / 1000 > 30
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: secondary {{ $labels.member_idx }} is {{ $value | humanizeDuration }} behind"
+          description: "Replication lag above 30 seconds for 5 minutes."
+
+      - alert: MongoDBConnectionsHigh
+        expr: |
+          mongodb_connections{state="current"}
+            / ignoring(state) (mongodb_connections{state="current"} + ignoring(state) mongodb_connections{state="available"}) > 0.80
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: MongoDB connections above 80% of the limit"
+          description: "{{ $value | humanizePercentage }} of available connections are in use."
+
+  - name: redis
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.host }}: Redis is not responding"
+          description: "The exporter cannot connect to Redis."
+
+      - alert: RedisMemoryNearLimit
+        expr: redis_memory_used_bytes / (redis_memory_max_bytes > 0) > 0.90
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: Redis uses over 90% of maxmemory"
+          description: "Keys will be evicted or writes rejected, depending on the eviction policy."
+
+      - alert: RedisRejectedConnections
+        expr: increase(redis_rejected_connections_total[5m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: Redis is rejecting connections"
+          description: "maxclients has been reached."
+
+  - name: postgres
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.host }}: PostgreSQL is not responding"
+          description: "The exporter cannot connect to PostgreSQL."
+
+      - alert: PostgresConnectionsHigh
+        expr: |
+          sum by (host, instance) (pg_stat_activity_count)
+            / on (host, instance) pg_settings_max_connections > 0.80
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: PostgreSQL connections above 80% of max_connections"
+          description: "{{ $value | humanizePercentage }} of max_connections in use."
+
+  - name: rabbitmq
+    rules:
+      - alert: RabbitMQResourceAlarm
+        expr: rabbitmq_alarms_memory_used_watermark == 1 or rabbitmq_alarms_free_disk_space_watermark == 1
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.host }}: RabbitMQ resource alarm, publishers are blocked"
+          description: "A memory or disk alarm is active; publishing connections are blocked."
+
+      - alert: RabbitMQQueueBacklog
+        expr: sum by (host, instance) (rabbitmq_queue_messages_ready) > 10000
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.host }}: over 10,000 messages waiting in queues"
+          description: "Consumers are not keeping up ({{ $value }} messages ready)."

@@ -1,0 +1,2 @@
+- targets: [rabbitmq:15692]
+  labels: { host: demo-rabbitmq }

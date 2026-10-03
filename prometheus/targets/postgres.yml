@@ -1,0 +1,6 @@
+# Enable with: docker compose --profile postgres up -d
+# then uncomment the target below.
+[]
+# - targets: [postgres-exporter:9187]
+#   labels:
+#     host: postgres-1

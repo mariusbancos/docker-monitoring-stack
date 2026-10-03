@@ -1,0 +1,9 @@
+# Hosts running node-exporter. The "host" label is what you see in Grafana.
+- targets: [node-exporter:9100]
+  labels:
+    host: monitoring
+
+# Remote servers (see remote/node-exporter.compose.yml):
+# - targets: [10.0.1.10:9100]
+#   labels:
+#     host: web-1

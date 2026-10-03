@@ -1,0 +1,32 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prometheus config, rules and rule tests
+        run: |
+          docker run --rm -v "$PWD/prometheus:/etc/prometheus:ro" --entrypoint promtool \
+            prom/prometheus:v3.15.0 check config /etc/prometheus/prometheus.yml
+          docker run --rm -v "$PWD/prometheus:/etc/prometheus:ro" -w /etc/prometheus/tests --entrypoint promtool \
+            prom/prometheus:v3.15.0 test rules alerts_test.yml
+
+      - name: Alertmanager config
+        run: |
+          docker run --rm -v "$PWD/alertmanager:/etc/alertmanager:ro" --entrypoint amtool \
+            prom/alertmanager:v0.34.1 check-config /etc/alertmanager/alertmanager.yml
+
+      - name: Compose files
+        run: |
+          cp .env.example .env
+          docker compose config -q
+          docker compose -f docker-compose.yml -f docker-compose.demo.yml config -q
+
+      - name: Dashboards are valid JSON
+        run: for f in grafana/dashboards/*.json; do jq empty "$f"; done

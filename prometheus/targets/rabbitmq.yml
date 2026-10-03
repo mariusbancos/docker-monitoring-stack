@@ -1,0 +1,6 @@
+# RabbitMQ 3.8+ exposes metrics natively on port 15692
+# (rabbitmq-plugins enable rabbitmq_prometheus). No exporter container needed.
+[]
+# - targets: [10.0.1.20:15692]
+#   labels:
+#     host: rabbitmq-1

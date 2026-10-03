@@ -1,0 +1,17 @@
+# Run on every server you want to monitor:
+#   docker compose -f node-exporter.compose.yml up -d
+# then add "<server-ip>:9100" to prometheus/targets/node.yml on the monitoring host.
+#
+# node-exporter has no authentication: allow port 9100 only from the monitoring
+# server's IP (firewall rule or cloud security group).
+services:
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run|var/lib/docker/.+)($|/)
+    network_mode: host   # real network interface metrics, not the container's
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave

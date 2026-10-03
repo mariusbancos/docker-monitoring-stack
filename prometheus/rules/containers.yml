@@ -1,0 +1,19 @@
+groups:
+  - name: containers
+    rules:
+      - alert: ContainerRestartLoop
+        expr: changes(container_start_time_seconds{name!=""}[15m]) > 2
+        labels: { severity: warning }
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting repeatedly"
+          description: "{{ $labels.name }} restarted {{ $value }} times in the last 15 minutes."
+
+      - alert: ContainerNearMemoryLimit
+        expr: |
+          container_memory_working_set_bytes{name!=""}
+            / (container_spec_memory_limit_bytes{name!=""} > 0) > 0.90
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Container {{ $labels.name }} is close to its memory limit"
+          description: "{{ $labels.name }} uses {{ $value | humanizePercentage }} of its memory limit."

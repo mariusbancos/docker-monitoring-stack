@@ -1,0 +1,2 @@
+- targets: [postgres-exporter:9187]
+  labels: { host: demo-postgres }

@@ -1,0 +1,6 @@
+# Enable with: docker compose --profile redis up -d
+# then uncomment the target below.
+[]
+# - targets: [redis-exporter:9121]
+#   labels:
+#     host: redis-1

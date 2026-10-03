@@ -1,0 +1,39 @@
+# Local demo: sample MongoDB (replica set), Redis, PostgreSQL and RabbitMQ
+# with all exporters enabled, so every dashboard and alert rule has data.
+#   docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+services:
+  prometheus:
+    volumes:
+      - ./demo/targets:/etc/prometheus/targets:ro
+
+  mongodb-exporter:
+    profiles: !reset []
+    depends_on: { mongodb: { condition: service_healthy } }
+  redis-exporter:
+    profiles: !reset []
+  postgres-exporter:
+    profiles: !reset []
+
+  mongodb:
+    # 8.2: newer MongoDB releases refuse to start on Linux 6.19+ kernels
+    # (SERVER-121912). Fine for throwaway demo data.
+    image: mongo:8.2
+    command: [--replSet, rs0, --bind_ip_all]
+    networks: [monitoring]
+    healthcheck:
+      # Initiates the single-node replica set on first run.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status().ok } catch (e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]}).ok }"]
+      interval: 10s
+      start_period: 20s
+  redis:
+    image: redis:8.2
+    command: [--maxmemory, 64mb]
+    networks: [monitoring]
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: postgres
+    networks: [monitoring]
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    networks: [monitoring]
