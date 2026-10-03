@@ -1,0 +1,2 @@
+# Show this repository as YAML on GitHub (YAML is not counted by default).
+*.yml linguist-detectable=true
